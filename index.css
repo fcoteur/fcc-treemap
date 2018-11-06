@@ -1,0 +1,33 @@
+#chart {
+  font: 10px sans-serif;
+  position: relative;
+}
+
+.node {
+  box-sizing: border-box;
+  position: absolute;
+  overflow: hidden;
+}
+
+.node-label {
+  padding: 4px;
+  line-height: 1em;
+  white-space: pre;
+}
+
+.node-value {
+  color: rgba(0,0,0,0.8);
+  font-size: 9px;
+  margin-top: 1px;
+}
+
+.tooltip {
+  position: absolute;
+  padding: 10px;                
+  font: 12px Arial;        
+  background: rgba(255, 255, 204, 0.95);
+  box-shadow: 1px 1px 10px rgba(128, 128, 128, 0.6);
+  border: 0px;        
+  border-radius: 2px;            
+  pointer-events: none; 
+}
