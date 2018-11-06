@@ -1,7 +1,53 @@
+var width = 960,
+    height = 1060;
+
+var format = d3.format(",d");
+
+var color = d3.scaleOrdinal()
+    .range(d3.schemeCategory10
+        .map(function(c) { c = d3.rgb(c); c.opacity = 0.6; return c; }));
+
+var treemap = d3.treemap()
+    .size([width, height])
+    .paddingInner(1);
+
+function renderD3(data) {
+
+    var root = d3.hierarchy(data)
+    .eachBefore(function(d) {
+        d.data.id = (d.parent ? d.parent.data.id + "." : "") + d.data.name; 
+      })
+      .sum(sumBySize)
+        .sort(function(a, b) { return b.height - a.height || b.value - a.value; });
+    treemap(root);
+    d3.select("#chart").selectAll(".node")
+        .data(root.leaves())
+        .enter()
+        .append("div")
+            .attr("class", "node")
+            .attr("title", function(d) { return d.id + "\n" + format(d.value); })
+            .style("left", function(d) { return d.x0 + "px"; })
+            .style("top", function(d) { return d.y0 + "px"; })
+            .style("width", function(d) { return d.x1 - d.x0 + "px"; })
+            .style("height", function(d) { return d.y1 - d.y0 + "px"; })
+            .style("background", function(d) { while (d.depth > 1) d = d.parent; return color(d.id); })
+        .append("div")
+            .attr("class", "node-label")
+            .text(function(d) { return d.id })
+        .append("div")
+            .attr("class", "node-value")
+            .text(function(d) { return format(d.value); });
+}
+
+function sumBySize(d) {
+    return d.value;
+}
+  
+
 const kickstarterPledges = 'https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/kickstarter-funding-data.json'
 const movieSales = 'https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/movie-data.json'
 const videoGameSales = 'https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/video-game-sales-data.json'
-const data = [];
+const dataSets = [];
 
 d3.queue()
     .defer(d3.json, kickstarterPledges)
@@ -11,62 +57,9 @@ d3.queue()
 
 function ready(error, kickstater, movies, videoGames) {
     if (error) console.log(error);
-    data.push(kickstater);
-    data.push(movies);
-    data.push(videoGames);
+    dataSets.push(kickstater);
+    dataSets.push(movies);
+    dataSets.push(videoGames);
+    console.log(kickstater)
     renderD3(kickstater);
 }
-
-const width = 932;
-const height = 1060;
-const color = d3.scaleOrdinal().range(d3.schemeCategory10);
-const format = d3.format(",d")
-
-treemap = data => d3.treemap()
-    .size([width, height])
-    .padding(1)
-    .round(true)
-  (d3.hierarchy(data)
-    .sum(d => d.size)
-    .sort((a, b) => b.height - a.height || b.value - a.value))
-
-function renderD3(dataSet) {
-
-    const root = treemap(data);
-  
-    const svg = d3.select(DOM.svg(width, height))
-        .style("width", "100%")
-        .style("height", "auto")
-        .style("font", "10px sans-serif");
-  
-    const leaf = svg.selectAll("g")
-      .data(root.leaves())
-      .enter().append("g")
-        .attr("transform", d => `translate(${d.x0},${d.y0})`);
-  
-    leaf.append("title")
-        .text(d => `${d.ancestors().reverse().map(d => d.data.name).join("/")}\n${format(d.value)}`);
-  
-    leaf.append("rect")
-        .attr("id", d => (d.leafUid = DOM.uid("leaf")).id)
-        .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-        .attr("fill-opacity", 0.6)
-        .attr("width", d => d.x1 - d.x0)
-        .attr("height", d => d.y1 - d.y0);
-  
-    leaf.append("clipPath")
-        .attr("id", d => (d.clipUid = DOM.uid("clip")).id)
-      .append("use")
-        .attr("xlink:href", d => d.leafUid.href);
-  
-    leaf.append("text")
-        .attr("clip-path", d => d.clipUid)
-      .selectAll("tspan")
-      .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g).concat(format(d.value)))
-      .enter().append("tspan")
-        .attr("x", 3)
-        .attr("y", (d, i, nodes) => `${(i === nodes.length - 1) * 0.3 + 1.1 + i * 0.9}em`)
-        .attr("fill-opacity", (d, i, nodes) => i === nodes.length - 1 ? 0.7 : null)
-        .text(d => d);
-  
-  }
